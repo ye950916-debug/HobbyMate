@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       
+       xsi:schemaLocation="
+           http://www.springframework.org/schema/beans
+           https://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/context
+           https://www.springframework.org/schema/context/spring-context.xsd
+           http://www.springframework.org/schema/mvc
+           https://www.springframework.org/schema/mvc/spring-mvc.xsd
+           http://www.springframework.org/schema/tx
+           https://www.springframework.org/schema/tx/spring-tx.xsd">
+
+      <!-- ========= MVC 기본 설정 ================================ -->
+
+      <!-- @Controller, @RestController, @RequestMapping 스캔 -->
+      <context:component-scan base-package="com.springmvc" />
+
+      <!-- Spring MVC 기능 활성화 : Handler-Mapping, Handler-Adapter 객체를 생성 -->
+		<mvc:annotation-driven>
+		    <mvc:message-converters>
+		        <bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+		            <property name="objectMapper" ref="objectMapper"/>
+		        </bean>
+		    </mvc:message-converters>
+		</mvc:annotation-driven>
+		
+		<bean id="objectMapper" class="com.fasterxml.jackson.databind.ObjectMapper" />
+		
+		<bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+		    <property name="targetObject" ref="objectMapper" />
+		    <property name="targetMethod" value="registerModule" />
+		    <property name="arguments">
+		        <list>
+		            <bean class="com.fasterxml.jackson.datatype.jsr310.JavaTimeModule" />
+		        </list>
+		    </property>
+		</bean>
+
+      <!-- 정적 리소스 경로 매핑 (js, css, images 등) -->
+      <mvc:resources mapping="/resources/**" location="/resources/" />
+      <mvc:resources mapping="/vendors/**" location="/resources/vendors/" />
+
+      <!-- ========= View Resolver (JSP 경로 설정) ======================== -->
+	    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+	        <property name="prefix" value="/WEB-INF/views/" />
+	        <property name="suffix" value=".jsp" />
+	    </bean>
+   	
+	    <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+	    	<property name="maxUploadSize" value="10240000" />
+	    </bean>
+	    
+	    <!-- 내부용 -->
+	    <!--
+	    <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+			<property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>
+			<property name="url" value="jdbc:mysql://localhost:3306/hobbymate?serverTimezone=Asia/Seoul"/>
+			<property name="username" value="root"/>
+			<property name="password" value="1234"/>
+		</bean>
+		 -->
+		<!-- cafe24용 mariadb로 수정 -->
+		
+		<bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+		    <property name="driverClassName" value="org.mariadb.jdbc.Driver"/>
+		    <property name="url" value="jdbc:mariadb://localhost:3306/ksg002424?useUnicode=true&amp;characterEncoding=UTF-8&amp;serverTimezone=Asia/Seoul"/>
+		    <property name="username" value="ksg002424"/>
+		    <property name="password" value="Ghfhffhfh@37"/>
+		</bean>
+		
+		
+		<bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+			<property name="dataSource" ref="dataSource" />
+		</bean>
+		
+		<bean id="restTemplate" class="org.springframework.web.client.RestTemplate"/>
+		
+		<!-- 트랜잭션 매니저 등록 -->
+    	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+      	  <property name="dataSource" ref="dataSource" />
+    	</bean>
+    	
+   		<!-- 트랜잭션 활성화 -->
+    	<tx:annotation-driven transaction-manager="transactionManager"/>
+    	
+		<!-- properties 파일 로드 -->
+		<context:property-placeholder location="classpath:application.properties"/>
+    	
+</beans>
